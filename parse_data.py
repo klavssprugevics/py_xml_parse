@@ -104,7 +104,7 @@ for child in root:
     if not pamatsastavs_list:
         continue
 
-    # Saraksts ar speletaju nummuriem, kas tiks ievietoti sastava
+    # Saraksts ar speletaju numuriem, kas tiks ievietoti sastava
     player_nr = []
 
     # Saraksts, kas atbilst player_nr sarakstam un satur bool vertibu, vai speletajs ir pamatsastava
@@ -141,6 +141,9 @@ for child in root:
         cursor.execute("INSERT INTO Speletaji_sastava (speletajs, sastavs, pamatsastavs) VALUES (?, ?, ?)",
                        (player_nr[i], ss_count + 1, main_player[i]))
 
+        # Palielina katra speletaju spelu skaitu par 1
+        cursor.execute("UPDATE Speletajs SET spelu_skaits = spelu_skaits + 1 WHERE speletaja_nr = (?)", (player_nr[i],))
+
     sastavi_spele.append(ss_count + 1)
     # print("----------------------------")
 
@@ -166,8 +169,40 @@ cursor.execute("INSERT INTO Spele (spele_id, datums, vieta, skatitaji, komanda1,
                komandas_spele[1], sastavi_spele[1], virstiesnesis, linijtiesnesi[0], linijtiesnesi[1]))
 
 
-# for row in cursor.execute('SELECT * FROM Spele'):
-#     print(row)
+def time_to_seconds(time):
+    min_sec = time.split(':')
+    return int(min_sec[0]) * 60 + int(min_sec[1])
+
+# Pievieno sodus db
+for child in root:
+
+    sodi_list = child.find("Sodi")
+
+    if not sodi_list:
+        continue
+
+    # Dabu kopejo sodu skaitu, lai varetu izveidot unikalu id
+    s_count = 0
+
+
+    for sods in sodi_list:
+        for row in cursor.execute("SELECT count(*) FROM Sods"):
+            s_count = row[0] + 1
+
+        nr = sods.get("Nr")
+        laiks = time_to_seconds(sods.get("Laiks"))
+
+        cursor.execute("INSERT INTO Sods (sods_id, laiks, speletajs, spele) VALUES (?, ?, ?, ?)", (s_count, laiks, nr, game_count))
+
+        # Papildina speletaja sodu skaitu
+        cursor.execute("UPDATE Speletajs SET sodu_skaits = sodu_skaits + 1 WHERE speletaja_nr = (?)", (nr,))
+
+
+
+
+
+for row in cursor.execute('SELECT * FROM Spele'):
+    print(row)
 
 # for row in cursor.execute('SELECT * FROM Speletaju_sastavs'):
 #     print(row)
@@ -178,9 +213,14 @@ cursor.execute("INSERT INTO Spele (spele_id, datums, vieta, skatitaji, komanda1,
 
 # for row in cursor.execute('SELECT * FROM Tiesnesis'):
 #     print(row)
-# for row in cursor.execute('SELECT * FROM Speletajs'):
-#     print(row)
+for row in cursor.execute('SELECT * FROM Speletajs'):
+    print(row)
+
+for row in cursor.execute('SELECT * FROM Sods'):
+    print(row)
+
 # for row in cursor.execute('SELECT * FROM Komanda'):
 #     print(row)
 
 conn.commit()
+
