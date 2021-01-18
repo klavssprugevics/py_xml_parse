@@ -46,9 +46,31 @@ for vt in root.iter("VT"):
         if row[0] != 0:
             t_exists = True
 
+    # Ja tiesnesis neeksiste, to pievieno
+    if not t_exists:
+
+        # Dabu kopejo tiesnesu skaitu, lai varetu izveidot unikalu id
+        t_count = 0
+        for row in cursor.execute("SELECT count(*) FROM Tiesnesis"):
+            t_count = row[0]
+
+        cursor.execute("INSERT INTO Tiesnesis (tiesnesis_id, vards, uzvards) VALUES (?, ?, ?)", (t_count + 1, vards, uzvards))
+
     # Papildina tiesnesu spelu skaitu
-    if t_exists:
-        cursor.execute("UPDATE Tiesnesis SET spelu_skaits = spelu_skaits + 1, vt_skaits = vt_skaits + 1 WHERE vards = (?) AND uzvards = (?)", (vards, uzvards))
+    cursor.execute("UPDATE Tiesnesis SET spelu_skaits = spelu_skaits + 1, vt_skaits = vt_skaits + 1 WHERE vards = (?) AND uzvards = (?)", (vards, uzvards))
+
+
+# TODO: Refactor ka funkciju, kura norada vai konkreta persona ir virstiesnesis spele
+# Process loti lidzigs ar tiesnesiem
+for lt in root.iter("T"):
+    vards = lt.get("Vards")
+    uzvards = lt.get("Uzvards")
+
+    # Paskatas, vai tads tiesnesis jau eksiste
+    t_exists = False
+    for row in cursor.execute("SELECT count(*) FROM Tiesnesis WHERE vards = (?) AND uzvards = (?)", (vards, uzvards)):
+        if row[0] != 0:
+            t_exists = True
 
     # Ja tiesnesis neeksiste, to pievieno
     if not t_exists:
@@ -59,17 +81,9 @@ for vt in root.iter("VT"):
             t_count = row[0]
 
         cursor.execute("INSERT INTO Tiesnesis (tiesnesis_id, vards, uzvards) VALUES (?, ?, ?)", (t_count + 1, vards, uzvards))
-    # if len(tiesnesis) == 0:
-        # print("no tiesnesis found with this name")
-    # for row in ):
-    #     print(row)
-    # print(vards, uzvards)
 
-# for lt in root.iter("T"):
-#     vards = lt.get("Vards")
-#     uzvards = lt.get("Uzvards")
-#     print(vards, uzvards)
-
+    # Papildina tiesnesu spelu skaitu
+    cursor.execute("UPDATE Tiesnesis SET spelu_skaits = spelu_skaits + 1 WHERE vards = (?) AND uzvards = (?)", (vards, uzvards))
 
 # for child in root:
 #
