@@ -85,31 +85,67 @@ for lt in root.iter("T"):
     # Papildina tiesnesu spelu skaitu
     cursor.execute("UPDATE Tiesnesis SET spelu_skaits = spelu_skaits + 1 WHERE vards = (?) AND uzvards = (?)", (vards, uzvards))
 
-# for child in root:
-#
-#     linijtiesnesi = child.find("T")
-#     virstiesnesis = child.find("VT")
-#
-#     if not linijtiesnesi and not virstiesnesis:
-#         continue
-#
-#     for lt in linijtiesnesi:
-#         vards = lt.get("Vards")
-#         uzvards = lt.get("Uzvards")
-#
-#         print(vards)
-#         print(uzvards)
-#
-#     for vt in virstiesnesis:
-#         vards = lt.get("Vards")
-#         uzvards = lt.get("Uzvards")
-#
-#         print(vards)
-#         print(uzvards)
+# Izveido divas speletaju sastavus, kas tiks pievienoti konkretajai spelei
+for child in root:
+
+    pamatsastavs_list = child.find("Pamatsastavs")
+
+    if not pamatsastavs_list:
+        continue
+
+    # Saraksts ar speletaju nummuriem, kas tiks ievietoti sastava
+    player_nr = []
+
+    # Saraksts, kas atbilst player_nr sarakstam un satur bool vertibu, vai speletajs ir pamatsastava
+    main_player = []
+
+    for player in pamatsastavs_list:
+        nr = player.get("Nr")
+        player_nr.append(nr)
+        main_player.append(1)
+
+    mainas_list = child.find("Mainas")
+
+    if not mainas_list:
+        continue
+
+    for maina in mainas_list:
+        new_nr = maina.get("Nr2")
+        player_nr.append(new_nr)
+        main_player.append(0)
+
+    # print(player_nr)
+    # print(main_player)
+
+    # Dabu kopejo sastavu skaitu db, lai varetu izveidot unikalu id
+    ss_count = 0
+    for row in cursor.execute("SELECT count(*) FROM Speletaju_sastavs"):
+        ss_count = row[0]
+
+    # Izveido speletaju sastava ierakstu DB
+    cursor.execute("INSERT INTO Speletaju_sastavs (speletaju_sastavs_id) VALUES (?)", (ss_count + 1,))
+
+    # Savieno visus speletajus ar izveidoto speletaju sastavu
+    for i in range(0, len(player_nr)):
+        cursor.execute("INSERT INTO Speletaji_sastava (speletajs, sastavs, pamatsastavs) VALUES (?, ?, ?)",
+                       (player_nr[i], ss_count + 1, main_player[i]))
 
 
-for row in cursor.execute('SELECT * FROM Tiesnesis'):
-    print(row)
+
+
+
+
+    # print("----------------------------")
+
+# for row in cursor.execute('SELECT * FROM Speletaju_sastavs'):
+#     print(row)
+
+
+# for row in cursor.execute('SELECT * FROM Speletaji_sastava WHERE sastavs = (?)', (1,)):
+#     print(row)
+
+# for row in cursor.execute('SELECT * FROM Tiesnesis'):
+#     print(row)
 # for row in cursor.execute('SELECT * FROM Speletajs'):
 #     print(row)
 # for row in cursor.execute('SELECT * FROM Komanda'):
