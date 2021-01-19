@@ -110,6 +110,7 @@ CREATE TABLE `Varti` (
   `guvejs` INT NOT NULL,
   `piespele1` INT NULL,
   `piespele2` INT NULL,
+  `piespele3` INT NULL,
   `spele` INT NOT NULL,
   PRIMARY KEY (`varti_id`),
   CONSTRAINT `fk_Varti_Spele1`
@@ -129,6 +130,11 @@ CREATE TABLE `Varti` (
     ON UPDATE NO ACTION,
   CONSTRAINT `piespele2`
     FOREIGN KEY (`piespele2`)
+    REFERENCES `Speletajs` (`speletaja_nr`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `piespele3`
+    FOREIGN KEY (`piespele3`)
     REFERENCES `Speletajs` (`speletaja_nr`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
