@@ -149,34 +149,33 @@ for protocol_file in file_list:
 
         mainas_list = child.find("Mainas")
 
-        if not mainas_list:
-            continue
-
-        for maina in mainas_list:
-            new_nr = maina.get("Nr2")
-            player_nr.append(new_nr)
-            main_player.append(0)
+        if  mainas_list:
+            for maina in mainas_list:
+                new_nr = maina.get("Nr2")
+                player_nr.append(new_nr)
+                main_player.append(0)
 
         # print(player_nr)
         # print(main_player)
 
         # Dabu kopejo sastavu skaitu db, lai varetu izveidot unikalu id
-        ss_count = 0
+        sastavs_count = 0
         for row in cursor.execute("SELECT count(*) FROM Speletaju_sastavs"):
-            ss_count = row[0]
+            sastavs_count = row[0]
 
         # Izveido speletaju sastava ierakstu DB
-        cursor.execute("INSERT INTO Speletaju_sastavs (speletaju_sastavs_id) VALUES (?)", (ss_count + 1,))
+        cursor.execute("INSERT INTO Speletaju_sastavs (speletaju_sastavs_id) VALUES (?)", (sastavs_count + 1,))
 
         # Savieno visus speletajus ar izveidoto speletaju sastavu
         for i in range(0, len(player_nr)):
             cursor.execute("INSERT INTO Speletaji_sastava (speletajs, sastavs, pamatsastavs) VALUES (?, ?, ?)",
-                           (player_nr[i], ss_count + 1, main_player[i]))
+                           (player_nr[i], sastavs_count + 1, main_player[i]))
 
             # Palielina katra speletaju spelu skaitu par 1
             cursor.execute("UPDATE Speletajs SET spelu_skaits = spelu_skaits + 1 WHERE speletaja_nr = (?)", (player_nr[i],))
 
-        sastavi_spele.append(ss_count + 1)
+        sastavi_spele.append(sastavs_count + 1)
+        print("new sastavs added")
         # print("----------------------------")
 
 
