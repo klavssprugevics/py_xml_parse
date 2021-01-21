@@ -32,7 +32,9 @@ for file in file_list:
     
     tree = ET.parse(file)
     root = tree.getroot()
-    
+
+
+
     
     # --- Mainigie, kas raksturo konkreto speli ---
 
@@ -62,6 +64,17 @@ for file in file_list:
         
         # Ja komanda ar atrasto nosaukumu nav DB, tad taa tiek pievienota.
         cursor.execute("INSERT OR IGNORE INTO Komanda (nosaukums) VALUES (?)", (team_name,))
+
+
+    # Parbaude, ka komanda nevar 2x viena diena spelet
+    team_already_played_today = False
+    for row in cursor.execute("SELECT datums, komanda1, komanda2 FROM Spele"):
+        if row[0] == game_date:
+            if row[1] in teams_playing or row[2] in teams_playing:
+                team_already_played_today = True
+
+    if team_already_played_today:
+        continue
 
     team_counter = 0
     # Nodefinee speletajus
@@ -97,7 +110,6 @@ for file in file_list:
             for row in cursor.execute("SELECT count(*) FROM Speletajs"):
                 player_id = row[0] + 1
 
-            # TODO: Check if player has a number on team
             cursor.execute("INSERT INTO Speletajs (speletajs_id, speletaja_nr, vards, uzvards, loma, komanda) VALUES (?, ?, ?, ?, ?, ?)",
                            (player_id, nr, vards, uzvards, loma, child.get("Nosaukums")))
 
@@ -201,7 +213,6 @@ for file in file_list:
         team_counter += 1
 
 
-    # TODO: Parbaude, ka viena komanda nevar spelet 2x viena diena
     cursor.execute("INSERT INTO Spele (spele_id, datums, vieta, skatitaji, komanda1, sastavs1, komanda2, sastavs2, vt," +
                   " linijtiesnesis1, linijtiesnesis2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                   (game_id, game_date, game_location, game_spectator_count, teams_playing[0], sastavi_spele[0],
