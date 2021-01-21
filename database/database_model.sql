@@ -139,7 +139,7 @@ CREATE TABLE `Varti` (
     ON UPDATE NO ACTION);
 
 CREATE TABLE `Sods` (
-  `sods_id` INTEGER PRIMARY KEY NOT NULL,
+  `sods_id` INTEGER PRIMARY KEY NULL,
   `laiks` INT NOT NULL,
   `speletajs` INT NOT NULL,
   `spele` INT NOT NULL,

@@ -3,6 +3,12 @@ import xml.etree.ElementTree as ET
 from os import walk
 
 
+# Funkcija, kas parveido MM:SS formatu uz sekundem
+def time_to_seconds(time):
+    min_sec = time.split(':')
+    return int(min_sec[0]) * 60 + int(min_sec[1])
+
+
 conn = sqlite3.connect(".//database//futbols.db")
 cursor = conn.cursor()
 
@@ -29,13 +35,25 @@ for file in file_list:
     
     
     # --- Mainigie, kas raksturo konkreto speli ---
+
+    game_id = 0             # unikalais speles id
+    for row in cursor.execute("SELECT count(*) FROM Spele"):
+        game_id = row[0] + 1
+
+    game_date = root.get("Laiks")
+    game_location = root.get("Skatitaji")
+    game_spectator_count = root.get("Vieta")
+
+    # satures vartu skaitu abam komandam, lai veiktu apkopojumu
+    result = [0, 0]
+    team_counter = 0
+    overtime = False
+
     teams_playing = []
     sastavi_spele = []
-    virstiesnesis = -1              # tiesnesa ID
-    
+    virstiesnesis = -1      # tiesnesa ID
+    # ---------------------------------------------
 
-    # ---------------------------------------------        
-    
 
     # Nodefinee komandas
     for team in root.iter("Komanda"):
@@ -69,6 +87,7 @@ for file in file_list:
                            (nr, vards, uzvards, loma, child.get("Nosaukums")))
 
 
+    # TODO: FUNCTION FOR THIS!
     # Nodefinee virstiesnesi
     for vt in root.iter("VT"):
         vards = vt.get("Vards")
@@ -83,13 +102,7 @@ for file in file_list:
 
         # Ja tiesnesis neeksiste, to pievieno
         if not t_exists:
-
-            # Dabu kopejo tiesnesu skaitu, lai varetu izveidot unikalu id
-            t_count = 0
-            for row in cursor.execute("SELECT count(*) FROM Tiesnesis"):
-                t_count = row[0]
-
-            cursor.execute("INSERT INTO Tiesnesis (tiesnesis_id, vards, uzvards) VALUES (?, ?, ?)", (t_count + 1, vards, uzvards))
+            cursor.execute("INSERT INTO Tiesnesis (vards, uzvards) VALUES (?, ?)", (vards, uzvards))
 
         # Papildina tiesnesu spelu skaitu
         cursor.execute("UPDATE Tiesnesis SET spelu_skaits = spelu_skaits + 1, vt_skaits = vt_skaits + 1 WHERE vards = (?) AND uzvards = (?)", (vards, uzvards))
@@ -98,7 +111,7 @@ for file in file_list:
         for row in cursor.execute("SELECT tiesnesis_id FROM Tiesnesis WHERE vards = (?) AND uzvards = (?)", (vards, uzvards)):
             virstiesnesis = row[0]
 
-    # TODO: Refactor ka funkciju, kura norada vai konkreta persona ir virstiesnesis spele
+
     # Process loti lidzigs ar tiesnesiem
     linijtiesnesi = []
     for lt in root.iter("T"):
@@ -113,13 +126,7 @@ for file in file_list:
 
         # Ja tiesnesis neeksiste, to pievieno
         if not t_exists:
-
-            # Dabu kopejo tiesnesu skaitu, lai varetu izveidot unikalu id
-            t_count = 0
-            for row in cursor.execute("SELECT count(*) FROM Tiesnesis"):
-                t_count = row[0]
-
-            cursor.execute("INSERT INTO Tiesnesis (tiesnesis_id, vards, uzvards) VALUES (?, ?, ?)", (t_count + 1, vards, uzvards))
+            cursor.execute("INSERT INTO Tiesnesis (vards, uzvards) VALUES (?, ?)", (vards, uzvards))
 
         # Papildina tiesnesu spelu skaitu
         cursor.execute("UPDATE Tiesnesis SET spelu_skaits = spelu_skaits + 1 WHERE vards = (?) AND uzvards = (?)", (vards, uzvards))
@@ -128,8 +135,8 @@ for file in file_list:
         for row in cursor.execute("SELECT tiesnesis_id FROM Tiesnesis WHERE vards = (?) AND uzvards = (?)", (vards, uzvards)):
             linijtiesnesi.append(row[0])
 
-    # Izveido divas speletaju sastavus, kas tiks pievienoti konkretajai spelei
 
+    # Izveido speletaju sastavus
     for child in root:
 
         pamatsastavs_list = child.find("Pamatsastavs")
@@ -150,66 +157,38 @@ for file in file_list:
 
         mainas_list = child.find("Mainas")
 
-        if  mainas_list:
+        if mainas_list:
             for maina in mainas_list:
                 new_nr = maina.get("Nr2")
                 player_nr.append(new_nr)
                 main_player.append(0)
 
-        # print(player_nr)
-        # print(main_player)
-
-        # Dabu kopejo sastavu skaitu db, lai varetu izveidot unikalu id
-        sastavs_count = 0
+        # Izveido jaunu sastavu ar unikalu id
+        sastavs_id = 0
         for row in cursor.execute("SELECT count(*) FROM Speletaju_sastavs"):
-            sastavs_count = row[0]
+            sastavs_id = row[0] + 1
 
-        # Izveido speletaju sastava ierakstu DB
-        cursor.execute("INSERT INTO Speletaju_sastavs (speletaju_sastavs_id) VALUES (?)", (sastavs_count + 1,))
+        cursor.execute("INSERT INTO Speletaju_sastavs (speletaju_sastavs_id) VALUES (?)", (sastavs_id,))
 
         # Savieno visus speletajus ar izveidoto speletaju sastavu
         for i in range(0, len(player_nr)):
             cursor.execute("INSERT INTO Speletaji_sastava (speletajs, sastavs, pamatsastavs) VALUES (?, ?, ?)",
-                           (player_nr[i], sastavs_count + 1, main_player[i]))
+                           (player_nr[i], sastavs_id, main_player[i]))
 
             # Palielina katra speletaju spelu skaitu par 1
             cursor.execute("UPDATE Speletajs SET spelu_skaits = spelu_skaits + 1 WHERE speletaja_nr = (?)", (player_nr[i],))
 
-        sastavi_spele.append(sastavs_count + 1)
-        # print("----------------------------")
-
-
-    # Ievieto DB Speles ierakstu
-    speles_datums = root.get("Laiks")
-    speles_vieta = root.get("Skatitaji")
-    speles_skatitaji = root.get("Vieta")
-    # print("Komandas:")
-    # print(teams_playing)
-    # print("Sastavi:")
-    # print(sastavi_spele)
-    # print("virstiesnesis:")
-    # print(virstiesnesis)
-    # print("linijtiesnesi:")
-    # print(linijtiesnesi)
-
-    # Dabu kopejo spelu skaitu db, lai varetu izveidot unikalu id
-    game_count = 0
-    for row in cursor.execute("SELECT count(*) FROM Spele"):
-        game_count = row[0] + 1
+        sastavi_spele.append(sastavs_id)
 
 
     # TODO: Parbaude, ka viena komanda nevar spelet 2x viena diena
     cursor.execute("INSERT INTO Spele (spele_id, datums, vieta, skatitaji, komanda1, sastavs1, komanda2, sastavs2, vt," +
                   " linijtiesnesis1, linijtiesnesis2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                  (game_count, speles_datums, speles_vieta, speles_skatitaji, teams_playing[0], sastavi_spele[0],
+                  (game_id, game_date, game_location, game_spectator_count, teams_playing[0], sastavi_spele[0],
                    teams_playing[1], sastavi_spele[1], virstiesnesis, linijtiesnesi[0], linijtiesnesi[1]))
 
 
-    def time_to_seconds(time):
-        min_sec = time.split(':')
-        return int(min_sec[0]) * 60 + int(min_sec[1])
-
-    # Pievieno sodus db
+    # Nodefinee sodus
     for child in root:
 
         sodi_list = child.find("Sodi")
@@ -217,58 +196,52 @@ for file in file_list:
         if not sodi_list:
             continue
 
-        # Dabu kopejo sodu skaitu, lai varetu izveidot unikalu id
-        s_count = 0
-
-
+        # Izveido unikalu id
+        sods_id = 0
         for sods in sodi_list:
             for row in cursor.execute("SELECT count(*) FROM Sods"):
-                s_count = row[0] + 1
+                sods_id = row[0] + 1
 
             nr = sods.get("Nr")
             laiks = time_to_seconds(sods.get("Laiks"))
 
-            cursor.execute("INSERT INTO Sods (sods_id, laiks, speletajs, spele) VALUES (?, ?, ?, ?)", (s_count, laiks, nr, game_count))
+            cursor.execute("INSERT INTO Sods (sods_id, laiks, speletajs, spele) VALUES (?, ?, ?, ?)", (sods_id, laiks, nr, game_id))
 
             # Papildina speletaja sodu skaitu
             cursor.execute("UPDATE Speletajs SET sodu_skaits = sodu_skaits + 1 WHERE speletaja_nr = (?)", (nr,))
 
-    # satures vartu skaitu abam komandam, lai veiktu apkopojumu
-    rezultats = [0, 0]
-    komanda_counter = 0
-    papildlaiks = False
 
     # Apstrada vartu guvumus
     for child in root:
 
-        varti_list = child.find("Varti")
+        goal_list = child.find("Varti")
 
-
-        if not varti_list:
-            komanda_counter += 1
+        if not goal_list:
+            team_counter += 1
             continue
-        print("MEKLE VARTUS PIE KOMANDAS COUNTER: " + str(komanda_counter))
+
         # Dabu kopejo vartu skaitu, lai varetu izveidot unikalu id
-        v_count = 0
+        goal_id = 0
 
         # Itere katram vartu guvumam
-        for varti in varti_list:
-            laiks = varti.get("Laiks")
-            sitiens = varti.get("Sitiens")
-            guvejs = varti.get("Nr")
+        for goal in goal_list:
+            laiks = goal.get("Laiks")
+            sitiens = goal.get("Sitiens")
+            guvejs = goal.get("Nr")
 
-            # ja varti guti pec 60:00, tad iestajies papildlaiks
+            # ja varti guti pec 60:00, tad iestajies overtime
             if time_to_seconds(laiks) > 3600:
-                papildlaiks = True
+                overtime = True
 
-            rezultats[komanda_counter] += 1
+            result[team_counter] += 1
 
             for row in cursor.execute("SELECT count(*) FROM Varti"):
-                v_count = row[0] + 1
+                goal_id = row[0] + 1
 
             piespeles = []
+
             # Noskaidro piespeles
-            for piespele in varti.iter("P"):
+            for piespele in goal.iter("P"):
                 piespeles.append(piespele.get("Nr"))
 
                 # Papildina speletaja piespelu skaitu
@@ -277,98 +250,67 @@ for file in file_list:
             # Izmanto query atkariba no piespelu skaita
             if len(piespeles) == 0:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, spele) VALUES (?, ?, ?, ?, ?)",
-                               (v_count, laiks, sitiens, guvejs, game_count))
+                               (goal_id, laiks, sitiens, guvejs, game_id))
             elif len(piespeles) == 1:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, piespele1, spele) VALUES (?, ?, ?, ?, ?, ?)",
-                               (v_count, laiks, sitiens, guvejs, piespeles[0], game_count))
+                               (goal_id, laiks, sitiens, guvejs, piespeles[0], game_id))
             elif len(piespeles) == 2:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, piespele1, piespele2, spele) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                               (v_count, laiks, sitiens, guvejs, piespeles[0], piespeles[1], game_count))
+                               (goal_id, laiks, sitiens, guvejs, piespeles[0], piespeles[1], game_id))
             elif len(piespeles) == 3:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, piespele1, piespele2, piespele3, spele) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                               (v_count, laiks, sitiens, guvejs, piespeles[0], piespeles[1], piespeles[2], game_count))
-
+                               (goal_id, laiks, sitiens, guvejs, piespeles[0], piespeles[1], piespeles[2], game_id))
 
             # Papildina speletaja vartu skaitu
             cursor.execute("UPDATE Speletajs SET vartu_skaits = vartu_skaits + 1 WHERE speletaja_nr = (?)", (guvejs,))
 
-        komanda_counter += 1
+        team_counter += 1
+
 
     # apstrada rezultatus un pieskaita komandas statistiku
     print("Komandas spele: " + teams_playing[0] + " " + teams_playing[1])
-    print("Rezultats: " + str(rezultats[0]) + ":" + str(rezultats[1]))
-    print("Papildlaiks: " + str(papildlaiks))
+    print("result: " + str(result[0]) + ":" + str(result[1]))
+    print("overtime: " + str(overtime))
 
-    punkti_uzvaretajiem = 5
-    punkti_zaudetajiem = 1
 
-    if papildlaiks:
-        punkti_uzvaretajiem = 3
-        punkti_zaudetajiem = 2
+    points_for_winner = 5
+    points_for_loser = 1
+
+    if overtime:
+        points_for_winner = 3
+        points_for_loser = 2
+
 
     # Uzvar 1. komanda
-    if rezultats[0] > rezultats[1]:
-        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (punkti_uzvaretajiem, teams_playing[0]))
-        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (punkti_zaudetajiem, teams_playing[1]))
+    if result[0] > result[1]:
+        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (points_for_winner, teams_playing[0]))
+        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (points_for_loser, teams_playing[1]))
 
-        if papildlaiks:
+        if overtime:
             cursor.execute("UPDATE Komanda SET uzv_sk_pp = uzv_sk_pp + 1 WHERE nosaukums = (?)", (teams_playing[0],))
             cursor.execute("UPDATE Komanda SET zaud_sk_pp = zaud_sk_pp + 1 WHERE nosaukums = (?)", (teams_playing[1],))
         else:
             cursor.execute("UPDATE Komanda SET uzv_sk_pl = uzv_sk_pl + 1 WHERE nosaukums = (?)", (teams_playing[0],))
             cursor.execute("UPDATE Komanda SET zaud_sk_pl = zaud_sk_pl + 1 WHERE nosaukums = (?)", (teams_playing[1],))
 
-    if rezultats[1] > rezultats[0]:
-        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (punkti_uzvaretajiem, teams_playing[1]))
-        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (punkti_zaudetajiem, teams_playing[0]))
+    else:
+        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (points_for_winner, teams_playing[1]))
+        cursor.execute("UPDATE Komanda SET punktu_sk = punktu_sk + (?) WHERE nosaukums = (?)", (points_for_loser, teams_playing[0]))
 
-        if papildlaiks:
+        if overtime:
             cursor.execute("UPDATE Komanda SET uzv_sk_pp = uzv_sk_pp + 1 WHERE nosaukums = (?)", (teams_playing[1],))
             cursor.execute("UPDATE Komanda SET zaud_sk_pp = zaud_sk_pp + 1 WHERE nosaukums = (?)", (teams_playing[0],))
         else:
             cursor.execute("UPDATE Komanda SET uzv_sk_pl = uzv_sk_pl + 1 WHERE nosaukums = (?)", (teams_playing[1],))
             cursor.execute("UPDATE Komanda SET zaud_sk_pl = zaud_sk_pl + 1 WHERE nosaukums = (?)", (teams_playing[0],))
 
+
     # Papildina vartu skaitu
-    cursor.execute("UPDATE Komanda SET guto_vartu_sk = guto_vartu_sk + (?) WHERE nosaukums = (?)", (rezultats[0], teams_playing[0]))
-    cursor.execute("UPDATE Komanda SET zaud_vartu_sk = zaud_vartu_sk + (?) WHERE nosaukums = (?)", (rezultats[1], teams_playing[0]))
+    cursor.execute("UPDATE Komanda SET guto_vartu_sk = guto_vartu_sk + (?) WHERE nosaukums = (?)", (result[0], teams_playing[0]))
+    cursor.execute("UPDATE Komanda SET zaud_vartu_sk = zaud_vartu_sk + (?) WHERE nosaukums = (?)", (result[1], teams_playing[0]))
 
-    cursor.execute("UPDATE Komanda SET guto_vartu_sk = guto_vartu_sk + (?) WHERE nosaukums = (?)", (rezultats[1], teams_playing[1]))
-    cursor.execute("UPDATE Komanda SET zaud_vartu_sk = zaud_vartu_sk + (?) WHERE nosaukums = (?)", (rezultats[0], teams_playing[1]))
-
-
-
-
-# for row in cursor.execute('SELECT * FROM Varti'):
-#     print(row)
-
-# print("Visas speles:")
-# for row in cursor.execute('SELECT * FROM Spele'):
-#     print(row)
-
-# for row in cursor.execute('SELECT * FROM Speletaju_sastavs'):
-#     print(row)
-print("Visas komandas:")
-for row in cursor.execute('SELECT * FROM Komanda'):
-    print(row)
-
-# for row in cursor.execute('SELECT * FROM Speletaji_sastava WHERE sastavs = (?)', (1,)):
-#     print(row)
-
-# print("Visi tiesnesi:")
-# for row in cursor.execute('SELECT * FROM Tiesnesis'):
-#     print(row)
-#
-# print("Visi speletaji")
-# for row in cursor.execute('SELECT * FROM Speletajs'):
-#     print(row)
-#
-# for row in cursor.execute('SELECT * FROM Sods'):
-#     print(row)
-
-# for row in cursor.execute('SELECT * FROM Komanda'):
-#     print(row)
+    cursor.execute("UPDATE Komanda SET guto_vartu_sk = guto_vartu_sk + (?) WHERE nosaukums = (?)", (result[1], teams_playing[1]))
+    cursor.execute("UPDATE Komanda SET zaud_vartu_sk = zaud_vartu_sk + (?) WHERE nosaukums = (?)", (result[0], teams_playing[1]))
 
 
 conn.commit()
-

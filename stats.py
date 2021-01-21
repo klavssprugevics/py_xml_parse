@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("futbols")
+conn = sqlite3.connect(".//database//futbols.db")
 cursor = conn.cursor()
 
 
@@ -12,9 +12,9 @@ for row in cursor.execute("SELECT nosaukums, punktu_sk, uzv_sk_pl, zaud_sk_pl, u
 
 print("---------------------------------------------")
 # Turnira 10 rezultativakie speletaji
-for row in cursor.execute("SELECT vards, uzvards, komanda, speletaja_nr, vartu_skaits, piespelu_skaits FROM Speletajs ORDER BY vartu_skaits DESC, piespelu_skaits DESC LIMIT 10"):
+for row in cursor.execute("SELECT vards, uzvards, komanda, speletaja_nr, vartu_skaits, piespelu_skaits FROM Speletajs ORDER BY vartu_skaits DESC, piespelu_skaits DESC"):
     print(row)
 
 # print("---------------------------------------------")
-# for row in cursor.execute("SELECT spele_id FROM Spele"):
+# for row in cursor.execute("SELECT * FROM Tiesnesis"):
 #     print(row)
