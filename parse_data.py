@@ -46,7 +46,6 @@ for file in file_list:
 
     # satures vartu skaitu abam komandam, lai veiktu apkopojumu
     result = [0, 0]
-    team_counter = 0
     overtime = False
 
     teams_playing = []
@@ -64,7 +63,7 @@ for file in file_list:
         # Ja komanda ar atrasto nosaukumu nav DB, tad taa tiek pievienota.
         cursor.execute("INSERT OR IGNORE INTO Komanda (nosaukums) VALUES (?)", (team_name,))
 
-
+    team_counter = 0
     # Nodefinee speletajus
     for child in root:
 
@@ -76,6 +75,7 @@ for file in file_list:
             continue
 
 
+
         for player in player_list:
             
             loma = player.get("Loma")
@@ -83,8 +83,26 @@ for file in file_list:
             uzvards = player.get("Uzvards")
             nr = player.get("Nr")
 
-            cursor.execute("INSERT OR IGNORE INTO Speletajs (speletaja_nr, vards, uzvards, loma, komanda) VALUES (?, ?, ?, ?, ?)",
-                           (nr, vards, uzvards, loma, child.get("Nosaukums")))
+            player_exists = False
+
+            for row in cursor.execute("SELECT count(*) FROM Speletajs WHERE speletaja_nr = (?) AND komanda = (?)",
+                                      (nr, teams_playing[team_counter])):
+                if row[0] != 0:
+                    player_exists = True
+
+            if player_exists:
+                continue
+
+            player_id = 0  # unikalais speles id
+            for row in cursor.execute("SELECT count(*) FROM Speletajs"):
+                player_id = row[0] + 1
+
+            # TODO: Check if player has a number on team
+            cursor.execute("INSERT INTO Speletajs (speletajs_id, speletaja_nr, vards, uzvards, loma, komanda) VALUES (?, ?, ?, ?, ?, ?)",
+                           (player_id, nr, vards, uzvards, loma, child.get("Nosaukums")))
+
+
+        team_counter += 1
 
 
     # TODO: FUNCTION FOR THIS!
@@ -136,6 +154,7 @@ for file in file_list:
             linijtiesnesi.append(row[0])
 
 
+    team_counter = 0
     # Izveido speletaju sastavus
     for child in root:
 
@@ -176,9 +195,10 @@ for file in file_list:
                            (player_nr[i], sastavs_id, main_player[i]))
 
             # Palielina katra speletaju spelu skaitu par 1
-            cursor.execute("UPDATE Speletajs SET spelu_skaits = spelu_skaits + 1 WHERE speletaja_nr = (?)", (player_nr[i],))
+            cursor.execute("UPDATE Speletajs SET spelu_skaits = spelu_skaits + 1 WHERE speletaja_nr = (?) AND komanda = (?)", (player_nr[i], teams_playing[team_counter]))
 
         sastavi_spele.append(sastavs_id)
+        team_counter += 1
 
 
     # TODO: Parbaude, ka viena komanda nevar spelet 2x viena diena
@@ -187,8 +207,8 @@ for file in file_list:
                   (game_id, game_date, game_location, game_spectator_count, teams_playing[0], sastavi_spele[0],
                    teams_playing[1], sastavi_spele[1], virstiesnesis, linijtiesnesi[0], linijtiesnesi[1]))
 
-
     # Nodefinee sodus
+    team_counter = 0
     for child in root:
 
         sodi_list = child.find("Sodi")
@@ -208,10 +228,13 @@ for file in file_list:
             cursor.execute("INSERT INTO Sods (sods_id, laiks, speletajs, spele) VALUES (?, ?, ?, ?)", (sods_id, laiks, nr, game_id))
 
             # Papildina speletaja sodu skaitu
-            cursor.execute("UPDATE Speletajs SET sodu_skaits = sodu_skaits + 1 WHERE speletaja_nr = (?)", (nr,))
+            cursor.execute("UPDATE Speletajs SET sodu_skaits = sodu_skaits + 1 WHERE speletaja_nr = (?) AND komanda = (?)", (nr, teams_playing[team_counter]))
+
+        team_counter += 1
 
 
     # Apstrada vartu guvumus
+    team_counter = 0
     for child in root:
 
         goal_list = child.find("Varti")
@@ -245,7 +268,7 @@ for file in file_list:
                 piespeles.append(piespele.get("Nr"))
 
                 # Papildina speletaja piespelu skaitu
-                cursor.execute("UPDATE Speletajs SET piespelu_skaits = piespelu_skaits + 1 WHERE speletaja_nr = (?)", (piespele.get("Nr"),))
+                cursor.execute("UPDATE Speletajs SET piespelu_skaits = piespelu_skaits + 1 WHERE speletaja_nr = (?) AND komanda = (?)", (piespele.get("Nr"), teams_playing[team_counter]))
 
             # Izmanto query atkariba no piespelu skaita
             if len(piespeles) == 0:
@@ -262,7 +285,7 @@ for file in file_list:
                                (goal_id, laiks, sitiens, guvejs, piespeles[0], piespeles[1], piespeles[2], game_id))
 
             # Papildina speletaja vartu skaitu
-            cursor.execute("UPDATE Speletajs SET vartu_skaits = vartu_skaits + 1 WHERE speletaja_nr = (?)", (guvejs,))
+            cursor.execute("UPDATE Speletajs SET vartu_skaits = vartu_skaits + 1 WHERE speletaja_nr = (?) AND komanda = (?)", (guvejs, teams_playing[team_counter]))
 
         team_counter += 1
 
@@ -311,6 +334,9 @@ for file in file_list:
 
     cursor.execute("UPDATE Komanda SET guto_vartu_sk = guto_vartu_sk + (?) WHERE nosaukums = (?)", (result[1], teams_playing[1]))
     cursor.execute("UPDATE Komanda SET zaud_vartu_sk = zaud_vartu_sk + (?) WHERE nosaukums = (?)", (result[0], teams_playing[1]))
+
+    # Ieraksta gala rezultatu speles tabula
+    cursor.execute("UPDATE Spele SET varti1 = (?), varti2 = (?), papildlaiks = (?) WHERE spele_id = (?)", (result[0], result[1], int(overtime), game_id))
 
 
 conn.commit()

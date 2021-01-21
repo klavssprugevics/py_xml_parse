@@ -10,6 +10,7 @@ CREATE TABLE `Komanda` (
   PRIMARY KEY (`nosaukums`));
 
 CREATE TABLE `Speletajs` (
+  `speletajs_id` INT NOT NULL,
   `speletaja_nr` INT NOT NULL,
   `vards` VARCHAR(45) NOT NULL,
   `uzvards` VARCHAR(45) NOT NULL,
@@ -19,7 +20,7 @@ CREATE TABLE `Speletajs` (
   `piespelu_skaits` INT NOT NULL DEFAULT 0,
   `sodu_skaits` INT NOT NULL DEFAULT 0,
   `komanda` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`speletaja_nr`),
+  PRIMARY KEY (`speletajs_id`),
   CONSTRAINT `fk_Speletajs_Komanda`
     FOREIGN KEY (`komanda`)
     REFERENCES `Komanda` (`nosaukums`)
@@ -43,7 +44,7 @@ CREATE TABLE `Speletaji_sastava` (
   PRIMARY KEY (`speletajs`, `sastavs`),
   CONSTRAINT `fk_Speletajs_has_Speletaju_saraksts_Speletajs1`
     FOREIGN KEY (`speletajs`)
-    REFERENCES `Speletajs` (`speletaja_nr`)
+    REFERENCES `Speletajs` (`speletajs_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Speletajs_has_Speletaju_saraksts_Speletaju_saraksts1`
@@ -119,22 +120,22 @@ CREATE TABLE `Varti` (
     ON UPDATE NO ACTION,
   CONSTRAINT `guvejs`
     FOREIGN KEY (`guvejs`)
-    REFERENCES `Speletajs` (`vards`)
+    REFERENCES `Speletajs` (`speletajs_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `piespele1`
     FOREIGN KEY (`piespele1`)
-    REFERENCES `Speletajs` (`speletaja_nr`)
+    REFERENCES `Speletajs` (`speletajs_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `piespele2`
     FOREIGN KEY (`piespele2`)
-    REFERENCES `Speletajs` (`speletaja_nr`)
+    REFERENCES `Speletajs` (`speletajs_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `piespele3`
     FOREIGN KEY (`piespele3`)
-    REFERENCES `Speletajs` (`speletaja_nr`)
+    REFERENCES `Speletajs` (`speletajs_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
 
@@ -150,6 +151,6 @@ CREATE TABLE `Sods` (
     ON UPDATE NO ACTION,
   CONSTRAINT `speletajs`
     FOREIGN KEY (`speletajs`)
-    REFERENCES `Speletajs` (`vards`)
+    REFERENCES `Speletajs` (`speletajs_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);

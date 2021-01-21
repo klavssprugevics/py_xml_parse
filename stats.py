@@ -12,7 +12,7 @@ for row in cursor.execute("SELECT nosaukums, punktu_sk, uzv_sk_pl, zaud_sk_pl, u
 
 print("---------------------------------------------")
 # Turnira 10 rezultativakie speletaji
-for row in cursor.execute("SELECT vards, uzvards, komanda, speletaja_nr, vartu_skaits, piespelu_skaits FROM Speletajs ORDER BY vartu_skaits DESC, piespelu_skaits DESC"):
+for row in cursor.execute("SELECT vards, uzvards, komanda, speletaja_nr, vartu_skaits, piespelu_skaits FROM Speletajs ORDER BY vartu_skaits DESC, piespelu_skaits DESC LIMIT 10"):
     print(row)
 
 # print("---------------------------------------------")
