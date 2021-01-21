@@ -27,16 +27,14 @@ CREATE TABLE `Speletajs` (
     ON UPDATE NO ACTION);
 
 CREATE TABLE `Tiesnesis` (
-  `tiesnesis_id` INT NOT NULL,
+  `tiesnesis_id` INTEGER PRIMARY KEY NOT NULL,
   `vards` VARCHAR(45) NOT NULL,
   `uzvards` VARCHAR(45) NOT NULL,
   `spelu_skaits` INT NOT NULL DEFAULT 0,
-  `vt_skaits` INT NOT NULL DEFAULT 0,
-  PRIMARY KEY (`tiesnesis_id`));
+  `vt_skaits` INT NOT NULL DEFAULT 0);
 
 CREATE TABLE `Speletaju_sastavs` (
-  `speletaju_sastavs_id` INT NULL,
-  PRIMARY KEY (`speletaju_sastavs_id`));
+  `speletaju_sastavs_id` INTEGER PRIMARY KEY NULL);
 
 CREATE TABLE `Speletaji_sastava` (
   `speletajs` INT NOT NULL,
@@ -55,18 +53,20 @@ CREATE TABLE `Speletaji_sastava` (
     ON UPDATE NO ACTION);
 
 CREATE TABLE `Spele` (
-  `spele_id` INT NOT NULL,
+  `spele_id` INTEGER PRIMARY KEY NOT NULL,
   `datums` DATE NOT NULL,
   `vieta` VARCHAR(45) NOT NULL,
   `skatitaji` INT NOT NULL,
+  `papildlaiks` TINYINT NULL,
   `komanda1` VARCHAR(45) NOT NULL,
   `sastavs1` INT NOT NULL,
+  `varti1` INT NULL DEFAULT 0,
   `komanda2` VARCHAR(45) NOT NULL,
   `sastavs2` INT NOT NULL,
+  `varti2` INT NULL DEFAULT 0,
   `vt` INT NOT NULL,
   `linijtiesnesis1` INT NOT NULL,
   `linijtiesnesis2` INT NOT NULL,
-  PRIMARY KEY (`spele_id`),
   CONSTRAINT `komanda1`
     FOREIGN KEY (`komanda1`)
     REFERENCES `Komanda` (`nosaukums`)
@@ -104,7 +104,7 @@ CREATE TABLE `Spele` (
     ON UPDATE NO ACTION);
 
 CREATE TABLE `Varti` (
-  `varti_id` INT NOT NULL,
+  `varti_id` INTEGER PRIMARY KEY NOT NULL,
   `laiks` INT NOT NULL,
   `sitiens` VARCHAR(45) NOT NULL,
   `guvejs` INT NOT NULL,
@@ -112,7 +112,6 @@ CREATE TABLE `Varti` (
   `piespele2` INT NULL,
   `piespele3` INT NULL,
   `spele` INT NOT NULL,
-  PRIMARY KEY (`varti_id`),
   CONSTRAINT `fk_Varti_Spele1`
     FOREIGN KEY (`spele`)
     REFERENCES `Spele` (`spele_id`)
@@ -140,11 +139,10 @@ CREATE TABLE `Varti` (
     ON UPDATE NO ACTION);
 
 CREATE TABLE `Sods` (
-  `sods_id` INT NOT NULL,
+  `sods_id` INTEGER PRIMARY KEY NOT NULL,
   `laiks` INT NOT NULL,
   `speletajs` INT NOT NULL,
   `spele` INT NOT NULL,
-  PRIMARY KEY (`sods_id`),
   CONSTRAINT `fk_Sods_Spele1`
     FOREIGN KEY (`spele`)
     REFERENCES `Spele` (`spele_id`)
@@ -155,4 +153,3 @@ CREATE TABLE `Sods` (
     REFERENCES `Speletajs` (`vards`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
-

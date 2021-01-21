@@ -14,3 +14,7 @@ print("---------------------------------------------")
 # Turnira 10 rezultativakie speletaji
 for row in cursor.execute("SELECT vards, uzvards, komanda, speletaja_nr, vartu_skaits, piespelu_skaits FROM Speletajs ORDER BY vartu_skaits DESC, piespelu_skaits DESC LIMIT 10"):
     print(row)
+
+# print("---------------------------------------------")
+# for row in cursor.execute("SELECT spele_id FROM Spele"):
+#     print(row)

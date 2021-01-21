@@ -3,14 +3,14 @@ import xml.etree.ElementTree as ET
 from os import walk
 
 
-conn = sqlite3.connect("futbols")
+conn = sqlite3.connect(".//database//futbols.db")
 cursor = conn.cursor()
 
-data_origin = ".//data"
+data_dir = ".//data"
 file_list = []
 
 # Apstaiga datu direktoriju un apluko kadi file/direktorijas tur atrodas
-for (dirpath, dirnames, filenames) in walk(data_origin):
+for (dirpath, dirnames, filenames) in walk(data_dir):
 
     # Parbauda, vai file atbilst statistikas protokola failam ar .xml paplasinajumu
     for file in filenames:
@@ -19,11 +19,12 @@ for (dirpath, dirnames, filenames) in walk(data_origin):
 
 
 # Apstrada katru no atrastajiem protokola failiem
-for protocol_file in file_list:
+for file in file_list:
+
+    print("-------------------------------------------------")
+    print("Parsing file: " + file)
     
-    print("Parsing file: " + protocol_file)
-    
-    tree = ET.parse(protocol_file)
+    tree = ET.parse(file)
     root = tree.getroot()
     
     
