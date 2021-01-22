@@ -32,14 +32,15 @@ for row in cursor.execute("SELECT nosaukums, punktu_sk, uzv_sk_pl, zaud_sk_pl, u
     counter+=1
 
 
-fig = make_subplots(rows=2, cols=1,
+fig = make_subplots(rows=3, cols=1,
     vertical_spacing=0.00000001,
     specs=[[{"type": "table"}],
+           [{"type": "table"}],
            [{"type": "table"}]],
-    subplot_titles=("1. Tabula", "2. Tabula"),
+    subplot_titles=("1. Tabula", "2. Tabula", "3. Tabula"),
     )
 
-fig.update_layout(height=(len(vietas) + 2) * 100 + 200)
+fig.update_layout(height=(len(vietas) + 2) * 100 + 600)
 
 fig.add_trace(
     go.Table(
@@ -63,7 +64,7 @@ komanda = []
 speletaja_nr = []
 vartu_skaits = []
 piespelu_skaits = []
-vietas= []
+vietas = []
 counter = 1
 
 
@@ -91,13 +92,25 @@ fig.add_trace(
     row=2, col=1
 )
 
+datumi = []
+vietas = []
+komandas = []
+rezultats = []
+vartu_skaits = []
+varti = []
 
-game_list= []
+
+game_list = []
 for row in cursor.execute("SELECT Spele.spele_id, Spele.datums, Spele.vieta, Spele.komanda1, Spele.komanda2,"
                           "Spele.varti1, Spele.varti2, Spele.varti1 + Spele.varti2 AS vartu_skaits"
                           " FROM Spele ORDER BY vartu_skaits DESC, Spele.datums DESC"):
     game_list.append(row)
-    print(row)
+
+    datumi.append(row[1])
+    vietas.append(row[2])
+    komandas.append("<b>" + row[3] + "</b>" + " | " + "<b>" + row[4] + "</b>")
+    rezultats.append(str(row[5]) + ":" + str(row[6]))
+    vartu_skaits.append(row[7])
 
 total_goal_list = []
 total_player_list = []
@@ -115,13 +128,45 @@ for game in game_list:
     total_goal_list.append(goal_list)
     total_player_list.append(player_list)
 
-print(len(game_list))
-print(len(total_player_list))
-print(len(total_goal_list))
+
+
+for i in range(0, len(game_list)):
+
+    goals_in_game = []
+
+    for j in range(0, len(total_goal_list[i])):
+
+        goals_in_game.append(
+            total_goal_list[i][j][1] + " " + total_player_list[i][j][2] + " " + total_player_list[i][j][3] + " ("
+            + str(total_player_list[i][j][1]) + ") " + total_goal_list[i][j][2] + "<br>"
+        )
+
+    varti.append(goals_in_game)
+
+    print("---------------------------")
+
+fig.add_trace(
+    go.Table(
+        header=dict(
+            values=["Datums", "Vieta", "Komandas", "Rezultāts", "Vārtu skaits", "Vārti"]
+        ),
+        cells=dict(
+            values=[datumi, vietas, komandas, rezultats, vartu_skaits, varti],
+            height=60
+        )
+    ),
+    row=3, col=1
+)
+
+for row in cursor.execute("SELECT skatitaji FROM Spele"):
+    print(row)
+# print(len(game_list))
+# print(len(total_player_list))
+# print(len(total_goal_list))
 
 
 
-# fig.show()
+fig.show()
 
 with open('statistics.html', 'w') as f:
     f.write(fig.to_html(full_html=False, include_plotlyjs='cdn'))

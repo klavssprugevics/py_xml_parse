@@ -43,8 +43,8 @@ for file in file_list:
         game_id = row[0] + 1
 
     game_date = root.get("Laiks")
-    game_location = root.get("Skatitaji")
-    game_spectator_count = root.get("Vieta")
+    game_location = root.get("Vieta")
+    game_spectator_count = root.get("Skatitaji")
 
     # satures vartu skaitu abam komandam, lai veiktu apkopojumu
     result = [0, 0]
