@@ -32,26 +32,28 @@ for row in cursor.execute("SELECT nosaukums, punktu_sk, uzv_sk_pl, zaud_sk_pl, u
     counter+=1
 
 
+fig = make_subplots(rows=2, cols=1,
+    vertical_spacing=0.00000001,
+    specs=[[{"type": "table"}],
+           [{"type": "table"}]],
+    subplot_titles=("1. Tabula", "2. Tabula"),
+    )
 
-
-fig1 = go.Figure(
-    data=[
-        go.Table(
-            header=dict(
-                values = ["Vieta", "Nosaukums", "Punktu skaits", "Uzvarēto spēļu skaits pamatlaikā",
-                          "Zaudēto spēļu skaits pamatlaikā", "Uzvarēto spēļu skaits papildlaikā",
-                          "Zaudēto spēļu skaits papildlaikā", "Gūto vārtu skaits", "Zaudēto vārtu skaits"]
-            ),
-            cells=dict(
-                values = [vietas, nosaukumi, punktu_sk, uzv_sk_pl, zaud_sk_pl, uzv_sk_pp, zaud_sk_pp,
-                          guto_vartu_sk, zaud_vartu_sk]
-            )
+fig.update_layout(height=(len(vietas) + 2) * 100 + 200)
+fig.add_trace(
+    go.Table(
+        header=dict(
+            values = ["Vieta", "Nosaukums", "Punktu skaits", "Uzvarēto spēļu skaits pamatlaikā",
+                      "Zaudēto spēļu skaits pamatlaikā", "Uzvarēto spēļu skaits papildlaikā",
+                      "Zaudēto spēļu skaits papildlaikā", "Gūto vārtu skaits", "Zaudēto vārtu skaits"]
+        ),
+        cells=dict(
+            values = [vietas, nosaukumi, punktu_sk, uzv_sk_pl, zaud_sk_pl, uzv_sk_pp, zaud_sk_pp,
+                      guto_vartu_sk, zaud_vartu_sk]
         )
-    ]
-)
+    ),
+    row=1, col=1
 
-fig1.update_layout(
-    title="1. vaicājums"
 )
 
 vardi = []
@@ -76,27 +78,24 @@ for row in cursor.execute("SELECT vards, uzvards, komanda, speletaja_nr, vartu_s
     counter+=1
 
 
-fig2 = go.Figure(
-    data=[
-        go.Table(
-            header=dict(
-                values=["Vieta", "Vārds", "Uzvārds", "Komanda", "Spēlētāja nr.", "Vārtu skaits", "Piespēļu skaits"]
-            ),
-           cells=dict(
-               values=[vietas, vardi, uzvardi, komanda, speletaja_nr, vartu_skaits, piespelu_skaits]
-           )
+fig.add_trace(
+    go.Table(
+        header=dict(
+            values=["Vieta", "Vārds", "Uzvārds", "Komanda", "Spēlētāja nr.", "Vārtu skaits", "Piespēļu skaits"]
+        ),
+        cells=dict(
+            values=[vietas, vardi, uzvardi, komanda, speletaja_nr, vartu_skaits, piespelu_skaits]
         )
-    ]
+    ),
+    row=2, col=1
 )
+fig.show()
 
-fig2.update_layout(
-    title="2. vaicājums",
-)
+
 # fig.show()
 
 with open('statistics.html', 'w') as f:
-    f.write(fig1.to_html(full_html=False, include_plotlyjs='cdn'))
-    f.write(fig2.to_html(full_html=False, include_plotlyjs='cdn'))
+    f.write(fig.to_html(full_html=False, include_plotlyjs='cdn'))
 
 
 # print("---------------------------------------------")
