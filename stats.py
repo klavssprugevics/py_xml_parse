@@ -40,6 +40,7 @@ fig = make_subplots(rows=2, cols=1,
     )
 
 fig.update_layout(height=(len(vietas) + 2) * 100 + 200)
+
 fig.add_trace(
     go.Table(
         header=dict(
@@ -89,15 +90,38 @@ fig.add_trace(
     ),
     row=2, col=1
 )
-fig.show()
+
+
+game_list= []
+for row in cursor.execute("SELECT Spele.spele_id, Spele.datums, Spele.vieta, Spele.komanda1, Spele.komanda2,"
+                          "Spele.varti1, Spele.varti2, Spele.varti1 + Spele.varti2 AS vartu_skaits"
+                          " FROM Spele ORDER BY vartu_skaits DESC, Spele.datums DESC"):
+    game_list.append(row)
+    print(row)
+
+total_goal_list = []
+total_player_list = []
+for game in game_list:
+
+    goal_list = []
+    for goal in cursor.execute("SELECT * FROM Varti WHERE spele=(?)", (game[0],)):
+        goal_list.append(goal)
+
+    player_list = []
+    for goal in goal_list:
+        for player in cursor.execute("SELECT speletajs_id, speletaja_nr, vards, uzvards FROM Speletajs WHERE speletajs_id = (?)", (goal[3],)):
+            player_list.append(player)
+
+    total_goal_list.append(goal_list)
+    total_player_list.append(player_list)
+
+print(len(game_list))
+print(len(total_player_list))
+print(len(total_goal_list))
+
 
 
 # fig.show()
 
 with open('statistics.html', 'w') as f:
     f.write(fig.to_html(full_html=False, include_plotlyjs='cdn'))
-
-
-# print("---------------------------------------------")
-# for row in cursor.execute("SELECT * FROM Tiesnesis"):
-#     print(row)

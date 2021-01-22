@@ -262,6 +262,11 @@ for file in file_list:
             laiks = goal.get("Laiks")
             sitiens = goal.get("Sitiens")
             guvejs = goal.get("Nr")
+            guvejs_id = -1
+
+            for player_id in cursor.execute("SELECT speletajs_id FROM SPELETAJS WHERE speletaja_nr = (?) AND komanda = (?)", (guvejs, teams_playing[team_counter])):
+                guvejs_id = player_id[0]
+
 
             # ja varti guti pec 60:00, tad iestajies overtime
             if time_to_seconds(laiks) > 3600:
@@ -273,10 +278,15 @@ for file in file_list:
                 goal_id = row[0] + 1
 
             piespeles = []
+            piespeles_id = []
 
             # Noskaidro piespeles
             for piespele in goal.iter("P"):
                 piespeles.append(piespele.get("Nr"))
+
+                for player_id in cursor.execute("SELECT speletajs_id FROM SPELETAJS WHERE speletaja_nr = (?) AND komanda = (?)",
+                                                (piespele.get("Nr"), teams_playing[team_counter])):
+                    piespeles_id.append(player_id[0])
 
                 # Papildina speletaja piespelu skaitu
                 cursor.execute("UPDATE Speletajs SET piespelu_skaits = piespelu_skaits + 1 WHERE speletaja_nr = (?) AND komanda = (?)", (piespele.get("Nr"), teams_playing[team_counter]))
@@ -284,16 +294,16 @@ for file in file_list:
             # Izmanto query atkariba no piespelu skaita
             if len(piespeles) == 0:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, spele) VALUES (?, ?, ?, ?, ?)",
-                               (goal_id, laiks, sitiens, guvejs, game_id))
+                               (goal_id, laiks, sitiens, guvejs_id, game_id))
             elif len(piespeles) == 1:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, piespele1, spele) VALUES (?, ?, ?, ?, ?, ?)",
-                               (goal_id, laiks, sitiens, guvejs, piespeles[0], game_id))
+                               (goal_id, laiks, sitiens, guvejs_id, piespeles_id[0], game_id))
             elif len(piespeles) == 2:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, piespele1, piespele2, spele) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                               (goal_id, laiks, sitiens, guvejs, piespeles[0], piespeles[1], game_id))
+                               (goal_id, laiks, sitiens, guvejs_id, piespeles_id[0], piespeles_id[1], game_id))
             elif len(piespeles) == 3:
                 cursor.execute("INSERT INTO Varti (varti_id, laiks, sitiens, guvejs, piespele1, piespele2, piespele3, spele) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                               (goal_id, laiks, sitiens, guvejs, piespeles[0], piespeles[1], piespeles[2], game_id))
+                               (goal_id, laiks, sitiens, guvejs_id, piespeles_id[0], piespeles_id[1], piespeles_id[2], game_id))
 
             # Papildina speletaja vartu skaitu
             cursor.execute("UPDATE Speletajs SET vartu_skaits = vartu_skaits + 1 WHERE speletaja_nr = (?) AND komanda = (?)", (guvejs, teams_playing[team_counter]))
