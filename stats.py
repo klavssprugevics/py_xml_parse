@@ -51,8 +51,9 @@ fig.add_trace(
         ),
         cells=dict(
             values = [vietas, nosaukumi, punktu_sk, uzv_sk_pl, zaud_sk_pl, uzv_sk_pp, zaud_sk_pp,
-                      guto_vartu_sk, zaud_vartu_sk]
-        )
+                      guto_vartu_sk, zaud_vartu_sk],
+            height = 60
+        ),
     ),
     row=1, col=1
 
@@ -132,18 +133,14 @@ for game in game_list:
 
 for i in range(0, len(game_list)):
 
-    goals_in_game = []
+    goals_in_game = ""
 
     for j in range(0, len(total_goal_list[i])):
 
-        goals_in_game.append(
-            total_goal_list[i][j][1] + " " + total_player_list[i][j][2] + " " + total_player_list[i][j][3] + " ("
-            + str(total_player_list[i][j][1]) + ") " + total_goal_list[i][j][2] + "<br>"
-        )
+        goals_in_game += total_goal_list[i][j][1] + " " + total_player_list[i][j][2] + " " + total_player_list[i][j][3] + " (" \
+                         + str(total_player_list[i][j][1]) + ") " + total_goal_list[i][j][2] + "<br>"
 
     varti.append(goals_in_game)
-
-    print("---------------------------")
 
 fig.add_trace(
     go.Table(
@@ -152,17 +149,10 @@ fig.add_trace(
         ),
         cells=dict(
             values=[datumi, vietas, komandas, rezultats, vartu_skaits, varti],
-            height=60
         )
     ),
     row=3, col=1
 )
-
-for row in cursor.execute("SELECT skatitaji FROM Spele"):
-    print(row)
-# print(len(game_list))
-# print(len(total_player_list))
-# print(len(total_goal_list))
 
 
 
