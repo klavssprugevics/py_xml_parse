@@ -32,15 +32,16 @@ for row in cursor.execute("SELECT nosaukums, punktu_sk, uzv_sk_pl, zaud_sk_pl, u
     counter+=1
 
 
-fig = make_subplots(rows=3, cols=1,
-    vertical_spacing=0.00000001,
+fig = make_subplots(rows=4, cols=1,
+    vertical_spacing=0.03,
     specs=[[{"type": "table"}],
            [{"type": "table"}],
+           [{"type": "table"}],
            [{"type": "table"}]],
-    subplot_titles=("1. Tabula", "2. Tabula", "3. Tabula"),
+    subplot_titles=("1. Tabula", "2. Tabula", "3. Tabula", "4. Tabula"),
     )
 
-fig.update_layout(height=(len(vietas) + 2) * 100 + 600)
+fig.update_layout(height=1600)
 
 fig.add_trace(
     go.Table(
@@ -155,6 +156,64 @@ fig.add_trace(
 )
 
 
+
+tiesnesu_saraksts = []
+vardi = []
+uzvardi = []
+spelu_skaits = []
+vt_skaits = []
+lt_skaits = []
+total_game_list = []
+
+for row in cursor.execute("SELECT tiesnesis_id, vards, uzvards, spelu_skaits, vt_skaits, spelu_skaits - vt_skaits AS linij_skaits FROM Tiesnesis ORDER BY spelu_skaits DESC"):
+    tiesnesu_saraksts.append(row)
+    vardi.append(row[1])
+    uzvardi.append(row[2])
+    spelu_skaits.append(row[3])
+    vt_skaits.append(row[4])
+    lt_skaits.append(row[5])
+
+
+for tiesnesis in tiesnesu_saraksts:
+
+    tiesn_id = tiesnesis[0]
+    game_list = []
+    sodu_count_list = []
+    for game in cursor.execute("SELECT spele_id, komanda1, komanda2 FROM Spele WHERE vt = (?)", (tiesn_id,)):
+        game_list.append(game)
+
+    for game in game_list:
+        for sods in cursor.execute("SELECT COUNT(*) FROM Sods WHERE spele = (?)", (game[0],)):
+            sodu_count_list.append(sods[0])
+
+
+    games = ""
+
+    if len(game_list) == 0:
+        games = "SPĒĻU NAV"
+
+
+    for i in range(0, len(game_list)):
+        games += "<b>" + game_list[i][1] + "</b>" + " | " + "<b>" + game_list[i][2] + "</b>" + " sodu skaits: " + str(sodu_count_list[i]) + "<br>"
+
+
+
+    total_game_list.append(games)
+    print(game_list)
+    print(sodu_count_list)
+
+
+fig.add_trace(
+    go.Table(
+        header=dict(
+            values=["Spēļu skaits", "Vārds", "Uzvārds", "Spēles kā virstiesnesis", "Spēles kā līnijtiesnesis", "Spēles kā VT"]
+        ),
+        cells=dict(
+            values=[spelu_skaits, vardi, uzvardi, vt_skaits, lt_skaits, total_game_list],
+        )
+    ),
+    row=4, col=1
+)
 
 fig.show()
 
