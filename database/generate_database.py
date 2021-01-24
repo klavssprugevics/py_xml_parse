@@ -1,3 +1,5 @@
+# Klavs Sprugevics - ks20064
+
 import sqlite3
 
 

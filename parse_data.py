@@ -1,3 +1,5 @@
+# Klavs Sprugevics - ks20064
+
 import sqlite3
 import xml.etree.ElementTree as ET
 from os import walk

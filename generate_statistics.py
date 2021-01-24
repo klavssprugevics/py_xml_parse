@@ -1,3 +1,5 @@
+# Klavs Sprugevics - ks20064
+
 import sqlite3
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
